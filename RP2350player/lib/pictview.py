@@ -57,11 +57,12 @@ def pictview(outfn, fps, tft, fill=0, callback=None):
                 print(sz)
             if (sz % 512) != 0:
               sz += 512 - sz % 512
+            if fn.endswith((".jpg",".jpeg")) is False:
+                fi.seek(sz,1)
+                continue
             buf = fi.read(sz)
             if len(buf) != sz:
                 break  # EOF or bad data
-            if fn.endswith((".jpg",".jpeg")) is False:
-                continue
         else:
             break
         
