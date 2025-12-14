@@ -4,54 +4,17 @@ import io
 import time
 import gc
 import os
-#import picocalc
-import tft_buttons
-button=tft_buttons.Buttons()
-#keyb = picocalc.keyboard
+
+from hw_wrapper import KeyFunc
+
 def waitKeyOff():
-    time.sleep_ms(100)
-    while checkKey():
-        st = getKeystring()
-        time.sleep_ms(200)
+    KeyFunc.waitKeyOff()
 
 def checkKey():
-    if button.right.value() == 0:
-        return True
-    if button.up.value() == 0:
-        return True
-    if button.down.value() == 0:
-        return True
-    if button.left.value() == 0:
-        return True
-    if button.bright.value() == 0:
-        return True
-    if button.bup.value() == 0:
-        return True
-    if button.bdown.value() == 0:
-        return True
-    if button.bleft.value() == 0:
-        return True
-    if button.start.value() == 0:
-        return True
-    if button.select.value() == 0:
-        return True
-
-    return False
+    return KeyFunc.checkKey()
 
 def getKeystring():
-    if button.right.value() == 0:
-        return "n"
-    if button.up.value() == 0:
-        return "u"
-    if button.down.value() == 0:
-        return " "
-    if button.left.value() == 0:
-        return "p"
-    if button.bdown.value() == 0:
-        return "2"
-    if button.bup.value() == 0:
-        return "8"
-    return ""
+    return KeyFunc.getKeystring()
 
 def isdir(dname):
     st = os.stat(dname)

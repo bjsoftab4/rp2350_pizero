@@ -76,11 +76,17 @@ def loop():
 
 g.dbgtime = False
 g.dbgmsg = False
- 
 button=Pin(26,Pin.IN, Pin.PULL_UP)  #GamePi13 START button
 g.button = button
+#pictview.pictview("/sd/gqxop.tar", 12, g.tft, 0, msg_time)
 if button.value() == 1:    # skip main() in case of trouble
-    init.startSD()
+    while True:
+        try:
+            init.startSD()
+            break
+        except:
+            print("SD error, retry")
+            time.sleep(1)
     init.startLCD()
     gc.enable()
 

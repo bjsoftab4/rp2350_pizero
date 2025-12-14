@@ -3,14 +3,14 @@ import os
 import time
 
 import sound
-#import picocalc
-#from picojpeg import PicoJpeg
 import utils
+
+from hw_wrapper import *
 
 class Pcm:
     @classmethod
-    def init(cls):
-        sound.pcm_init()
+    def init(cls, gpio):
+        sound.pcm_init(gpio)
     
     @classmethod
     def deinit(cls):
@@ -553,11 +553,11 @@ class DecodeMP3:
                 if 'q' in st:
                     retc = 9
                     break
-                if '8' in st:
+                if ']' in st:
                     cls.volume += 10
                     if cls.volume > 255:
                         cls.volume = 255
-                if '2' in st:
+                if '[' in st:
                     cls.volume -= 10
                     if cls.volume < 0:
                         cls.volume = 0
@@ -589,14 +589,9 @@ class DecodeMP3:
         total_ms = time.ticks_ms() - t_start
         #print(f"wait_ms={int(wait_us/1000)}, total_ms={total_ms}, CPU LOAD={100-int(wait_us/10/total_ms)}%")
         return retc
-import init
-init.startSD()
-init.startLCD()
-from machine import Pin
-pin18=Pin(18, Pin.IN, Pin.PULL_UP)
+
 def run(fdir = "/sd"):
-    Pcm.init()
-    utils.scan_dir(fdir, DecodeMP3.mainloop)
+    Pcm.init(PCM_GPIO)
     try:
         utils.scan_dir(fdir, DecodeMP3.mainloop)
     finally:
