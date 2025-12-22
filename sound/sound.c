@@ -17,6 +17,7 @@ volatile uint8_t  pcm_ridx, pcm_widx;
 volatile uint8_t  pcm_ch ;
 int pcm_rpos;
 int16_t pcm_gpio_pin1 = -1, pcm_gpio_pin2 = -1;
+#define PCM_DEFAULT_VALUE (1024)
 //=============================================
 // PWM DMA
 volatile int8_t PWM_DMA_channel = -1;
@@ -37,7 +38,7 @@ void pwm_dma_start(){
     if( p_pwm_buffer != NULL) {
         uint16_t *ptr = (uint16_t *)p_pwm_buffer;
         for( int i = 0; i < pwm_buffer_byte / 2; i++) {
-            *ptr = 1024;
+            *ptr = PCM_DEFAULT_VALUE;
             ptr++;
         }
     }
@@ -91,8 +92,7 @@ static void pcmcopy1ch(uint32_t *out32, int16_t *in16, int len, int volume) {
     uint level;
     
     for( i = 0; i < len; i++){
-        val = in16[i] + 32768;
-        val = (val * volume) >> 8;
+        val = ((in16[i] * volume) >> 8) + 32768;
         level = val >> 5 ;
         out32[i] = level << 16 | level;
     }
@@ -112,12 +112,10 @@ static void pcmcopy2ch_picocalc(uint16_t *out16, int16_t *in16, int len, int vol
 */
 static void pcmcopy2ch(uint16_t *out16, int16_t *in16, int len, int volume) {
     int i;
-    int val,val2;
+    int val;
     uint level;
     for( i = 0; i < len * 2; i+=2){
-        val = in16[i] + 32768;
-        val2 = in16[i+1] + 32768;
-        val = ((val + val2) * volume) >> 9;
+        val = (((in16[i] + in16[i+1]) * volume) >> 9) + 32768;
         level = val >> 5 ;
         out16[i] = level;
         out16[i+1] = level;
@@ -375,7 +373,7 @@ static void pwm_port_init() {
     uint slice_num = pwm_gpio_to_slice_num(pcm_gpio_pin1);
     pwm_set_clkdiv_int_frac4(slice_num, 1, 0);
     pwm_set_wrap(slice_num, 2047);
-    pwm_set_both_levels (slice_num, 1024, 1024);
+    pwm_set_both_levels (slice_num, PCM_DEFAULT_VALUE, PCM_DEFAULT_VALUE);
     // Set the PWM running
     pwm_set_enabled(slice_num, true);
 
@@ -573,7 +571,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pcm_start_obj, 0, 0, pcm_start);
 static mp_obj_t pcm_stop(size_t n_args, const mp_obj_t *args) {
     pwm_dma_stop();
     uint slice_num = pwm_gpio_to_slice_num(pcm_gpio_pin1);
-    pwm_set_both_levels (slice_num, 1024, 1024);
+    pwm_set_both_levels (slice_num, PCM_DEFAULT_VALUE, PCM_DEFAULT_VALUE);
 
     return mp_const_none;
 }
