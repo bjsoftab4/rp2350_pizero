@@ -187,11 +187,11 @@ class SDCard:
         self.cs(0)
 
         # read until start byte (0xff)
-        for i in range(_CMD_TIMEOUT):
+        for i in range(_CMD_TIMEOUT * 10):
             self.spi.readinto(self.tokenbuf, 0xFF)
             if self.tokenbuf[0] == _TOKEN_DATA:
                 break
-            time.sleep_ms(1)
+            time.sleep_us(50)
         else:
             self.cs(1)
             raise OSError("timeout waiting for response")

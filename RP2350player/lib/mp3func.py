@@ -75,6 +75,7 @@ class DecodeMP3:
     mpheader = memoryview(bytearray(6))
     basepos = 0
     volume = 128
+    callback_func = None
     
     @classmethod
     def BYTES_LEFT(cls):
@@ -181,7 +182,10 @@ class DecodeMP3:
         bitrate, nchans, samprate, bitspersample, outputsamps, layer, version = rc
         
         #bitrate, nchans, samprate, bitspersample, outputsamps, layer, version = unpack_from("<i", frameinfo)
-        print(f"bitrate={bitrate}, nchans={nchans},samprate={samprate},bitspersample={bitspersample},outputsamps={outputsamps},layer={layer},version={version}")
+        st = f"bitrate={bitrate}, nchans={nchans},samprate={samprate},bitspersample={bitspersample},outputsamps={outputsamps},layer={layer},version={version}"
+        print(st)
+        if DecodeMP3.callback_func is not None:
+            DecodeMP3.callback_func(3, f"{bitrate//1000}kbps,{samprate//1000}kHz")
 
     @staticmethod
     def hexdump(buf, title=""):
@@ -231,6 +235,8 @@ class DecodeMP3:
                 if flag_bar:
                     print("\r"+bar, end="\r")
                     print("+" * (progress+1), end="")
+                    if DecodeMP3.callback_func is not None:
+                        DecodeMP3.callback_func(2, progress * 2)
                 return 0
             if debugseek: print("unmatched mpeg header", [f"{x:04x}" for x in oldval], [f"{x:04x}" for x in newval])
             if debugseek: print("ptr start=",start, " ptr now=", cls.READ_PTR())
@@ -450,13 +456,16 @@ class DecodeMP3:
 
 
     @classmethod
-    def prolog(cls, infile, basepos = 0, filesize = 0):
+    def prolog(cls, infile, basepos = 0, filesize = 0, callback = None):
         cls.sr0 = 96_111    # invalid value
         cls.br0 = 640_111
         cls.basebr = 640_111
         cls.set_minfilebufsize(320_000, 44_100)
         cls.decoder = sound.mp3initdecoder()
-        cls.basepos = 0 
+        cls.basepos = 0
+        if callback is not None:
+            cls.callback_func = callback
+            cls.callback_func(1, infile)
 
         if isinstance(infile, str):
             if infile.endswith((".mp3",".MP3")):
@@ -500,102 +509,3 @@ class DecodeMP3:
     @classmethod
     def pause(cls):
         Pcm.stop()
-
-    @classmethod
-    def mainloop(cls, infile):
-        print(f"filename:{infile}")
-        rc = cls.prolog(infile)
-        if rc < 0:
-            return
-        rc = cls.skip_id3v2()
-        if rc < 0:
-            return
-        if not DecodeMP3.mp3file_find_sync_word():
-            return
-        rc = DecodeMP3.fillfilebuffer()
-        if rc < 0:
-            return
-        rc = DecodeMP3.look_for_1stframe()
-        rc = DecodeMP3.getframeinfo(DecodeMP3.decoder, DecodeMP3.frameinfo)
-        if rc < 0:
-            return
-
-        wait_us = 0
-        t_start = time.ticks_ms()
-        progress = int(50 * cls.fileremain / cls.fsize)
-        bar = "-" * 50
-        
-        retc = 0
-        while cls.mp3file_find_sync_word():
-            rc = cls.fillfilebuffer()
-            if rc < 0:
-               break
-
-            if utils.checkKey():
-                st = utils.getKeystring()
-                if ' ' in st:
-                    sec = (cls.fsize - cls.fileremain) / cls.basebr * 8
-                    #print("sec=",sec)
-                    if cls.mp3seek(sec + 10) < 0:
-                        break
-                if 'N' in st:
-                    retc = 4
-                    break
-                if 'P' in st:
-                    retc = 5
-                    break
-                if 'n' in st:
-                    retc = 2
-                    break
-                if 'p' in st:
-                    retc = 3
-                    break
-                if 'q' in st:
-                    retc = 9
-                    break
-                if ']' in st:
-                    cls.volume += 10
-                    if cls.volume > 255:
-                        cls.volume = 255
-                if '[' in st:
-                    cls.volume -= 10
-                    if cls.volume < 0:
-                        cls.volume = 0
-
-
-            lap0 = time.ticks_us()
-            while Pcm.get_freebuf() <= len(cls.pcmbuf) // 4 // 2:	# get_freebuf returns sample counts
-                #print(Pcm.get_freebuf())
-                pass
-            wait_us += time.ticks_diff(time.ticks_us(), lap0)
-
-            rc = cls.part_decode()
-            if rc == 1:
-                print(bar,end="\r")
-                continue
-            if rc < 0:
-                break
-
-            rc = cls.fillfilebuffer()
-            if rc < 0:
-               break
-
-            p1 = int(50 * cls.fileremain / cls.fsize)
-            if p1 != progress:
-                progress = p1
-                print("+",end="")
-        Pcm.stop()
-        print("")
-        total_ms = time.ticks_ms() - t_start
-        #print(f"wait_ms={int(wait_us/1000)}, total_ms={total_ms}, CPU LOAD={100-int(wait_us/10/total_ms)}%")
-        return retc
-
-def run(fdir = "/sd"):
-    Pcm.init(PCM_GPIO)
-    try:
-        utils.scan_dir(fdir, DecodeMP3.mainloop)
-    finally:
-        print("close")
-        Pcm.deinit()
-        os.listdir("/")
-

@@ -24,7 +24,7 @@ class Buttons():
         self.up = Pin(15, Pin.IN, Pin.PULL_UP) # Joystick up
         self.down = Pin(6, Pin.IN, Pin.PULL_UP) # Joystick 
         self.start = Pin(26, Pin.IN, Pin.PULL_UP) # 
-        self.select = Pin(19, Pin.IN, Pin.PULL_UP) # 
+        self.sel = Pin(19, Pin.IN, Pin.PULL_UP) # 
 
         self.bleft = Pin(9, Pin.IN, Pin.PULL_UP) # button Y (left)
         self.bright = Pin(21, Pin.IN, Pin.PULL_UP) # button A (right)

@@ -1,8 +1,10 @@
+"""Waveshare Pico LCD 1.3 inch display"""
 """ wrapper for GamePi13 """
-PCM_GPIO = (18,19) # for GamePi13
+PCM_GPIO = (18) # for GamePi13
 #PCM_GPIO = (26,27)	# for picocalc
 import time
-
+WMAX = 240
+HMAX = 240
 class picocalc:
     keyboard, display = None, None
 
@@ -39,7 +41,7 @@ class KeyFunc:
             return True
         if button.start.value() == 0:
             return True
-        if button.select.value() == 0:
+        if button.sel.value() == 0:
             return True
 
         return False
@@ -61,8 +63,8 @@ class KeyFunc:
             return "]"
         if button.start.value() == 0:
             return "s"
-        if button.select.value() == 0:
-            return "S"
+        if button.sel.value() == 0:
+            return "q"
         return ""
 
 
@@ -85,7 +87,12 @@ class PicoJpeg:
 
     @classmethod
     def decode_core(cls, buf, mode, core, offset=None):
-        rc = cls.tft.jpgdec_decodex2(buf)
+        rc = cls.tft.jpgdec_decode(buf, offset)
+        return rc
+
+    @classmethod
+    def decode_corex2(cls, buf, mode, core, offset=None):
+        rc = cls.tft.jpgdec_decodex2(buf, offset)
         return rc
 
     @classmethod

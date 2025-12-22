@@ -18,19 +18,6 @@ def startSD():
     cs = machine.Pin(43, machine.Pin.OUT, value=1)
 
     # Intialize SPI peripheral (start with 1 MHz)
-    """
-    spi = machine.SPI(id=1,
-                      baudrate=10000000,
-                      polarity=0,
-                      phase=0,
-                      bits=8,
-                      firstbit=machine.SPI.MSB,
-                      sck=machine.Pin(30),
-                      mosi=machine.Pin(31),
-                      miso=machine.Pin(40))
-    """
-    #spi = SoftSPI(
-    #spi = PioSPI(
     spi = machine.SPI(id=1,
               baudrate=1_000_000,
               polarity=0,
@@ -57,8 +44,9 @@ def startSD():
     if not found:
         print("Error SD")
 
-def startLCD():
-    tft = tft_config.config(2)
+def startLCD(rotation = 2):
+    tft = tft_config.config(rotation) #2 rotation =180)
     tft.init()
-    tft.madctl(0x80)
+    if rotation == 2:
+        tft.madctl(0x80)
     g.tft = tft

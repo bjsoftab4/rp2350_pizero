@@ -3,13 +3,10 @@
 import io
 import time
 
-from hw_wrapper import PicoJpeg
-from mp3 import DecodeMP3, Pcm
+from hw_wrapper import *
+from mp3func import DecodeMP3, Pcm
 import sound
 import utils
-
-WMAX = 320
-HMAX = 320
 
 IDX_TIME = 1
 
@@ -29,7 +26,11 @@ class JpegFunc:
     buffers = [None] * BUFFERNUM
     buffers_pos = [-1] * BUFFERNUM
     buffers_len = [BUFFERSIZE] * BUFFERNUM
-    
+
+    wmax = WMAX
+    hmax = HMAX
+    x2 = False
+ 
     @classmethod
     def test_buffer(cls, ipos, ilen):  # retc = buffer idx
         idx = -1
@@ -95,14 +96,14 @@ class JpegFunc:
         """
         scale = 1.0
         for fact in (4, 2, 1):
-            if w > WMAX * fact or h > HMAX * fact:
+            if w > cls.wmax * fact or h > cls.hmax * fact:
                 fact = fact * 2
                 scale = 1 / fact
                 break
         w = int(w * scale)
         h = int(h * scale)
-        off_x = (WMAX - w) // 2
-        off_y = (HMAX - h) // 2
+        off_x = (cls.wmax - w) // 2
+        off_y = (cls.hmax - h) // 2
         return (scale, (off_x, off_y))
 
     @classmethod
@@ -248,7 +249,11 @@ class JpegFunc:
         return rc
 
     @classmethod
-    def start(cls):
+    def start(cls, ssize=None):
+        if ssize != None:
+            cls.wmax = ssize[0]
+            cls.hmax = ssize[1]
+
         PicoJpeg.start(0)
         if cls.filebuffer is None:
             cls.filebuffer = bytearray(cls.BUFFERSIZE * cls.BUFFERNUM)
@@ -271,7 +276,7 @@ class JpegFunc:
         if crop is None:
             ox = offset[0]
             oy = offset[1]
-            crop = (ox, oy, WMAX - ox, HMAX - oy)
+            crop = (ox, oy, cls.wmax - ox, cls.hmax - oy)
         ioption = cls.get_option(scale)
 
         jpginfo = PicoJpeg.decode_opt(buf, offset, crop, ioption)
@@ -285,7 +290,10 @@ class JpegFunc:
             cls.drawpage = 1
 
     @classmethod
-    def showjpeg(cls, buf, center=False):
+    def showjpeg(cls, buf, center=False, flipflag=True):
+        if cls.x2:
+            rc = cls.showjpegx2(buf, center)
+            return rc
         if cls.decoder_running:
             jpginfo = PicoJpeg.decode_core_wait()
             if jpginfo[0] == 0 and jpginfo[1] != 0:
@@ -297,13 +305,13 @@ class JpegFunc:
         w = jpginfo[1]
         h = jpginfo[2]
         offset = None
-        if h > 240:
+        if h > 240 or flipflag == False:
             if center:
-                offset = ((WMAX - w) // 2, (HMAX - h) // 2)
+                offset = ((cls.wmax - w) // 2, (cls.hmax - h) // 2)
             jpginfo = PicoJpeg.decode_core(cls.buf_save, 0, 1, offset)  # single page
         else:
             if center:
-                offset = ((WMAX - w) // 2, (240 - h) // 2)
+                offset = ((cls.wmax - w) // 2, (240 - h) // 2)
             jpginfo = PicoJpeg.decode_core(
                 cls.buf_save, cls.drawpage, 1, offset
             )  # flip page
@@ -312,21 +320,23 @@ class JpegFunc:
         return jpginfo
 
     @classmethod
-    def play_movie2(cls, outfn, fps):
-        print(outfn)
-        if not outfn.endswith(".tar"):
-            if outfn.endswith((".jpg", ".jpeg")):
-                rc = cls.play_picture(outfn, fps)
-                return rc
-            return -1
+    def showjpegx2(cls, buf, center=False):
+        if cls.decoder_running:
+            jpginfo = PicoJpeg.decode_core_wait()
+            if jpginfo[0] == 0 and jpginfo[1] != 0:
+                print(f"decode error {jpginfo}")
+        cls.buf_save = buf  # To exclude gc while docoder running
+        cls.decoder_running = True
 
-        try:
-            fi = io.open(outfn, mode="rb")
-        except (FileNotFoundError, PermissionError, IOError, ValueError):
-            return -1
-        rc = cls.play_tar(fi, None, fps)
-        fi.close()
-        return rc
+        jpginfo = PicoJpeg.getinfo(buf)
+        w = jpginfo[1]
+        h = jpginfo[2]
+        offset = None
+        if center and w <= 120 and h <= 80:
+            offset = ((120 - w) // 2, (80 - h) // 2)
+        jpginfo = PicoJpeg.decode_corex2(cls.buf_save, 0, 1, offset)  # single page
+        return jpginfo
+
     @classmethod
     def play_movie(cls, outfn, fps):
         print(outfn)
@@ -346,7 +356,7 @@ class JpegFunc:
 
 
     @classmethod
-    def play_movie3(cls, outfn, mp3fn = None):
+    def play_movie3(cls, outfn, mp3fn = None, callback=None):
         print(outfn)
         if not outfn.endswith('.tar'):
             return -1
@@ -363,7 +373,7 @@ class JpegFunc:
                 return -1
         else:
             mp3fi = None
-        rc = cls.play_tar(fi, mp3fi)
+        rc = cls.play_tar(fi, mp3fi, callback)
         fi.close()
         return rc
     
@@ -435,11 +445,11 @@ class JpegFunc:
         return rc
 
     @classmethod
-    def play_tar(cls, fp_tar, fp_mp3 = None, argfps = 12):
+    def play_tar(cls, fp_tar, fp_mp3 = None, callback=None):
         sec = 0
         ret = utils.analyze_tar(fp_tar)
         if ret is None:
-            fps = argfps
+            fps = 12
             jpgtoc = None
             idxpos = None
             mp3pos = 0
@@ -447,7 +457,7 @@ class JpegFunc:
         else:
             fps, jpgtoc, idxpos, mp3pos, jpgpos = ret
             if fps is None:
-                fps = argfps
+                fps = 12
             #print(ret)
         tar_info = (fps, jpgtoc, idxpos, mp3pos, jpgpos)
         PicoJpeg.clear()
@@ -472,7 +482,8 @@ class JpegFunc:
 
         rc = 0
         while True:
-            retc = cls.play_tar_from(fp_tar, fp_mp3, sec, tar_info)
+            retc = cls.play_tar_from(fp_tar, fp_mp3, sec, tar_info, callback)
+            utils.waitKeyOff()
             if retc is None:
                 break
             #print(retc)
@@ -493,7 +504,7 @@ class JpegFunc:
 
 
     @classmethod
-    def play_tar_from(cls, fp_tar, fp_mp3, startsec, tar_info):
+    def play_tar_from(cls, fp_tar, fp_mp3, startsec, tar_info, callback=None):
         #print("Start play tar from", startsec, "sec")
         fps, jpgtoc, idxpos, mp3pos, jpgpos = tar_info
 
@@ -517,6 +528,9 @@ class JpegFunc:
                 last = time.ticks_ms()
                 start_us = time.ticks_us()
                 
+                if callback != None:
+                    callback()
+                    
                 if utils.checkKey():  # 早送りなどの検出
                     rc = 0
                     sec = int(frame_number / fps)

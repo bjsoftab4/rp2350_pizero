@@ -23,12 +23,48 @@ def isdir(dname):
     return False
 
 def scan_dir(dname, func, ext=(".mp3",".MP3")):
+    print("Enter Scan directory:",dname)
+    try:
+        if not isdir(dname):
+            print("Bad dname", dname)
+            return -1
+    except :#FileNotFoundError:
+        return -1
     flist = os.listdir(dname)
     flist.sort()
-    print("Scan directory:"+dname)
+    if dname == "/":
+        dname = ""
+    filelist = [
+        f for f in flist if not isdir(dname+"/"+f) and f.endswith(ext)
+    ]
+    filelist.sort()
+    if len(filelist) > 0:
+        print("File list:", filelist)
+    i = 0
+    while i < len(filelist):
+        fn = dname + "/" + filelist[i]
+        
+        if fn.endswith(ext):
+            waitKeyOff()
+            rc = func(fn)
+            if rc == 9: #quit
+                return rc
+            if rc == 2: # next file
+                pass
+            if rc == 3: # prev file
+                i = i - 1
+                if( i < 0):
+                    i = 0
+                continue
+            if rc == 4 or rc == 5: # next/prev folder
+                return rc
+        i += 1
+
     dirlist = [
         f for f in flist if isdir(dname+"/"+f)
     ]
+    if len(dirlist) > 0:
+        print("dirlist:", dirlist)
     i = 0
     while i < len(dirlist):
         d = dirlist[i]
@@ -42,33 +78,11 @@ def scan_dir(dname, func, ext=(".mp3",".MP3")):
             if( i < 0):
                 i = 0
             continue
+        if rc == 9:
+            return 9
 
         i += 1
 
-    filelist = [
-        f for f in flist if not isdir(dname+"/"+f) and f.endswith(ext)
-    ]
-    filelist.sort()
-    print("File list:", filelist)
-    i = 0
-    while i < len(filelist):
-        fn = dname + "/" + filelist[i]
-        
-        if fn.endswith(ext):
-            waitKeyOff()
-            rc = func(fn)
-            if rc == 9: #quit
-                break
-            if rc == 2: # next file
-                pass
-            if rc == 3: # prev file
-                i = i - 1
-                if( i < 0):
-                    i = 0
-                continue
-            if rc == 4 or rc == 5: # next/prev folder
-                return rc
-        i += 1
     return 0
 
 def hexdump(buf, title=""):
