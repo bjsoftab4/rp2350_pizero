@@ -1,13 +1,13 @@
 # micropython for rp2350_pizero
-- RP2350-PiZERO �p�̃{�[�h�ݒ�t�@�C��
-- GamePi13 �Ƒg�ݍ��킹���ۂ̐ݒ�t�@�C��
-- GamePi13 �Ƒg�ݍ��킹�Ďg������v���C���[, MP3 �v���C���[
+- RP2350-PiZERO 用のボード設定ファイル
+- GamePi13 と組み合わせた際の設定ファイル
+- GamePi13 と組み合わせて使う動画プレイヤー, MP3 プレイヤー
 
-GamePi13 �֘A���O��Ƃ��Ă���h���C�o�� st7789_mpy ���|�W�g���ɂ���܂��B
+GamePi13 関連が前提としているドライバは st7789_mpy リポジトリにあります。
 
-## build �̑O��
+## build の前提
 
-st7789_mpy ���ȉ��̍\���ɍ��킹�� clone ���܂�
+st7789_mpy を以下の構成に合わせて clone します
 
 ```
   rp2350_pizero/	this repository
@@ -18,52 +18,53 @@ st7789_mpy ���ȉ��̍\���ɍ��킹�� clone ���܂�
 ```
 
 
-### �r���h�菇
+### ビルド手順
 
-rp2350_pizero/boards ��RP2350_PIZERO���t�H���_����micropython �r���h���ɃR�s�[�imicropython/ports/rp2/boards�j
+rp2350_pizero/boards のRP2350_PIZEROをフォルダごとmicropython ビルド環境にコピー（micropython/ports/rp2/boards）
 
-�ȉ��̃R�}���h�Ńr���h
+以下のコマンドでビルド
 ```sh
 cd micropython/ports/rp2
 make USER_C_MODULES="Path/To/rp2350_pizero/micropython.cmake" BOARD=RP2350_PIZERO
 ```
 
 
-## �z�z�t�@�C������
+## 配布ファイル説明
 - RP2350player/
   - main.py\
-�v���C���[�{��\
-�N������SD�J�[�h���}�E���g���ASD�J�[�h�̒��� tar �t�@�C�����Đ����܂��B\
-Select�{�^��(���̏\���{�^���̏�ɂ���{�^���j�ōĐ����[�h��؂�ւ��܂��B�i�����Ȃ�����A�������蓮��AMP3�v���C���[�j\
-���̏\���{�^���O�L�� tar �t�@�C���� /sd ����ǂݍ��ސݒ�ɂ��Ă��܂��B\
-���̏\���{�^���@���E�őO�A���̃t�@�C���Đ��A����1���X�L�b�v�B�E�̏\���{�^���@�㉺�ŉ��ʒ����B\
-�v���Y���ŉ�ʂ��㉺���]���Ďg���ꍇ�� main.py ��init.startLCD(0) �� 2 �ɕύX���܂��B
+プレイヤー本体\
+起動時にSDカードをマウントし、SDカードの中の tar, mp3 ファイルを再生します。\
+Selectボタン(左の十字ボタンの上にあるボタン）で再生モードを切り替えます。（音声なし動画、音声あり動画、MP3プレイヤー）\
+起動時にRP2350をPCに接続し、Thonny で接続している場合、画面下部に時計を表示します。\
+左の十字ボタン　左右で前、次のファイル再生、下で1分スキップ。右の十字ボタン　上下で音量調整。\
+プリズムが付属している GamePi13 で画面を上下反転して使う場合は main.py のinit.startLCD(0) を 2 に変更します。
 
   - hw_wrapper.py\
-�n�[�h�E�F�A�\���̕ύX�p�B�ق���HW�ɗ��p����ꍇ�ɏC���B
+ハードウェア構成の変更用。ほかのHWに流用する場合に修正。
 
 - RP2350player/
-  - hw/
+  - hw/\
+ハードウェア依存ファイル
     - tft_config.py\
-LCD�̐ݒ�t�@�C���Bst7789 �h���C�o�����p����B�ق���HW�ɗ��p����ꍇ�ɏC���B
+LCDの設定ファイル。st7789 ドライバが利用する。ほかのHWに流用する場合に修正。
     - init.py\
-�������p�t�@�C���BSD�J�[�h�̃|�[�g�ύX���ɏC���B
-  - lib/
-����≹���̍Đ��p�v���O����
+初期化用ファイル。SDカードのポート変更時に修正。
+  - lib/\
+動画や音声の再生用プログラム
 
 - tools/
   - maketar_gp.py\
-�w�肵�� *.mp4 �t�@�C����A/V �������AJPEG�ϊ��Amp3�ϊ����A *.tar �ɂ܂Ƃ߂�v���O����\
-GamePi13 ��O��ɂ����掿�Őݒ�B
+指定した *.mp4 ファイルをA/V 分離し、JPEG変換、mp3変換し、 *.tar にまとめるプログラム\
+GamePi13 を前提にした画像サイズで変換。linux用。
 
   - setTimePC.py\
-USB�|�[�g���������V���A���|�[�g��������΁ARP2350�̎�����ݒ肷�邽�߂̕�����𑗐M����v���O�����B\
-Thonny����N�������RP2350�Ɏ����Ŏ�����ݒ肷�邪�AThonny���g�p���Ȃ��ꍇ�Ɏg���B\
-linux, windows �Ŋm�F�ς݁B
+USBで接続しているシリアルポートを検索し、見つければRP2350に時刻を設定するための文字列を送信するプログラム。\
+Thonnyから起動すればRP2350に自動で時刻を設定するが、Thonnyを使用しない場合に使う。\
+linux, windows で確認済み。
 
 - boards/\
-  RP2350�����{�[�h�ݒ�t�@�C���Bmicropython �p�B
+  RP2350向けボード設定ファイル。micropython 用。
 
 - sound/\
-  �T�E���h�h���C�o�Bmicropython �p�B
+  サウンドドライバ。micropython 用。
 
