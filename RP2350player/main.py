@@ -150,7 +150,7 @@ button=Pin(26,Pin.IN, Pin.PULL_UP)  #GamePi13 START button
 g.button = button
 
 if button.value() == 1:    # skip main() when pressing START
-    while True:
+    for _ in range(3):
         try:
             init.startSD()
             break
