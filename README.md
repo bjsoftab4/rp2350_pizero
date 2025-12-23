@@ -13,7 +13,7 @@ st7789_mpy ‚ğˆÈ‰º‚Ì\¬‚É‡‚í‚¹‚Ä clone ‚µ‚Ü‚·
   rp2350_pizero/	this repository
       boards		micropython board configuration
       RP2350player	movie/MP3 player
-      sound			micropython sound driver
+      sound		micropython sound driver
   st7789_mpy/		russhughes/st7789_mpy + bitbank2/JPEGDEC
 ```
 
@@ -30,7 +30,7 @@ make USER_C_MODULES="Path/To/rp2350_pizero/micropython.cmake" BOARD=RP2350_PIZER
 
 
 ## ”z•zƒtƒ@ƒCƒ‹à–¾
-- RP2350player
+- RP2350player/
   - main.py\
 ƒvƒŒƒCƒ„[–{‘Ì\
 ‹N“®‚ÉSDƒJ[ƒh‚ğƒ}ƒEƒ“ƒg‚µASDƒJ[ƒh‚Ì’†‚Ì tar ƒtƒ@ƒCƒ‹‚ğÄ¶‚µ‚Ü‚·B\
@@ -42,16 +42,16 @@ Selectƒ{ƒ^ƒ“(¶‚Ì\šƒ{ƒ^ƒ“‚Ìã‚É‚ ‚éƒ{ƒ^ƒ“j‚ÅÄ¶ƒ‚[ƒh‚ğØ‚è‘Ö‚¦‚Ü‚·Bi‰¹º‚
   - hw_wrapper.py\
 ƒn[ƒhƒEƒFƒA\¬‚Ì•ÏX—pB‚Ù‚©‚ÌHW‚É—¬—p‚·‚éê‡‚ÉC³B
 
-- RP2350player
-  - hw
+- RP2350player/
+  - hw/
     - tft_config.py\
 LCD‚Ìİ’èƒtƒ@ƒCƒ‹Bst7789 ƒhƒ‰ƒCƒo‚ª—˜—p‚·‚éB‚Ù‚©‚ÌHW‚É—¬—p‚·‚éê‡‚ÉC³B
     - init.py\
 ‰Šú‰»—pƒtƒ@ƒCƒ‹BSDƒJ[ƒh‚Ìƒ|[ƒg•ÏX‚ÉC³B
-  - lib
+  - lib/
 “®‰æ‚â‰¹º‚ÌÄ¶—pƒvƒƒOƒ‰ƒ€
 
-- tools
+- tools/
   - maketar_gp.py\
 w’è‚µ‚½ *.mp4 ƒtƒ@ƒCƒ‹‚ğA/V •ª—£‚µAJPEG•ÏŠ·Amp3•ÏŠ·‚µA *.tar ‚É‚Ü‚Æ‚ß‚éƒvƒƒOƒ‰ƒ€\
 GamePi13 ‚ğ‘O’ñ‚É‚µ‚½‰æ¿‚Åİ’èB
@@ -61,9 +61,9 @@ USBƒ|[ƒg‚ğŒŸõ‚µƒVƒŠƒAƒ‹ƒ|[ƒg‚ğŒ©‚Â‚¯‚ê‚ÎARP2350‚Ì‚ğİ’è‚·‚é‚½‚ß‚Ì•¶š—ñ‚
 Thonny‚©‚ç‹N“®‚·‚ê‚ÎRP2350‚É©“®‚Å‚ğİ’è‚·‚é‚ªAThonny‚ğg—p‚µ‚È‚¢ê‡‚Ég‚¤B\
 linux, windows ‚ÅŠm”FÏ‚İB
 
-- boards\
+- boards/\
   RP2350Œü‚¯ƒ{[ƒhİ’èƒtƒ@ƒCƒ‹Bmicropython —pB
 
-- sound\
+- sound/\
   ƒTƒEƒ“ƒhƒhƒ‰ƒCƒoBmicropython —pB
 
